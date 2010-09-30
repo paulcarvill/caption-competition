@@ -1,0 +1,14 @@
+{% extends 'base_alt.html' %}
+
+{% block 'head' %}
+	<title>Caption competition: colophon</title>
+{% endblock %}
+	
+{% block 'main' %}
+	<h2>Colophon</h2>
+	<div class="complist comps bd colophon">
+	<p>This website runs on <a href="http://code.google.com/appengine/">Google App Engine</a>.  It is written in <a href="http://diveintopython.org/">Python</a> on the back end and HTML, CSS and JavaScript for the front end.  It uses the <a href="http://code.google.com/appengine/docs/python/datastore/overview.html">Google Datastore</a> for most of the database stuff, except the images which are stored and manipulated by the <a href="http://code.google.com/appengine/docs/python/blobstore/overview.html">Google Blobstore</a>.</p>
+	<p><a href="http://julia-belling.blogspot.com/">Julia Belling</a> did the lovely LBi-esque design and Paul Carvill did the code.  Photos are the models' own and are not actual size.</p>
+	<p>All the code is in GitHub here <a href="http://www.github.com/paulcarvill">http://ww.github.com/paulcarvill</a> so please check it out and help us improve the site.</p>
+	</div>
+{% endblock %}

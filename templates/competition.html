@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block 'bodyclass' %}{% if complete %}complete{% else %}active{% endif %}{% endblock %}
+
+{% block 'head' %}
+	<title>Caption competition</title>
+{% endblock %}
+	
+{% block 'main' %}
+	{% if title %}
+		<div id="desc">
+			<div id="descInner">
+			<h1>Title: {{ title }}</h1>
+			{% if description %}
+			<h2>Description: {{ description }}</h2>
+			{% endif %}
+			</div>
+		</div>
+	{% endif %}
+	<section class="caption">
+		{% if complete %}
+		<div id="captionlist">
+		<ul id="captionListInner" class="results">
+			{% for caption in captions %}
+				<li class=""><!-- result result-{{ forloop.counter }} -->
+					{% if caption.text %}<p>{{ caption.text|striptags }}<p>{% endif %}
+					{% if caption.author %}<p class="author">by {{ caption.author|striptags }}</p>{% endif %}
+				</li>
+			{% endfor %}
+		</ul>
+		{% if showPagination %}
+			<p id="more"><a href="/competitions/{{ competitionId }}/page/{{ page }}">page <span id="{{competitionId}}">1</span></a></p>
+			{% endif %}
+		</div>
+		{% else %}
+		<form action="/caption/submit" method="POST">
+			<input type="hidden" name="competitionId" value="{{ competitionId }}" />
+			<div>
+				<label>Your caption:</label><textarea maxlength=140 name="caption" /></textarea>
+			</div>
+			<div>
+				<label>Your name:</label><input type="text" name="author" />
+			</div>
+			<div>
+				<input type="submit" value="Submit caption!"/>
+			</div>
+		</form>
+		{% endif %}
+		<img src="/assets/img/chaplin.png" class="chaplin" />
+		<img src="/assets/img/reminder.png" class="reminder" />
+	</section>	
+	<section class="photo">		
+		<img src="/assets/img/clip.png"  class="clip clipA" />
+		<img src="/assets/img/clip.png"  class="clip clipB" />
+		<div class="phot">
+			<img src="{{ img }}" />
+		</div>
+	</section>
+{% endblock %}

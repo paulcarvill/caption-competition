@@ -1,0 +1,17 @@
+{% extends 'base_alt.html' %}
+
+{% block 'head' %}
+	<title>Caption competition: success!</title>
+{% endblock %}
+
+<div>
+	{% block 'heading' %}
+	{% endblock %}
+	
+	{% block 'main' %}
+		<div class="success">
+			<p>Thanks, your caption submission was successfull! All submitted captions will be published when the competition closes.</p>
+			<p><a href="/competitions">Meanwhile, you can view some older competitions here</a></p>
+		</div>
+	{% endblock %}
+</div>

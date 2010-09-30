@@ -1,0 +1,20 @@
+{% extends 'base_alt.html' %}
+
+{% block 'head' %}
+	<title>Caption competition: admin</title>
+{% endblock %}
+	
+{% block 'main' %}
+	<ul class="success">
+	{% for c in competitions %}
+		<li>
+		<a href="/competitions/{{ c.id }}">{{ c.date|date:"M jS Y" }}</a> — 
+	
+		{% if not c.complete %}
+			This competition is still open (<a href="/competitions/{{ c.id }}/end">end it</a>)</li>
+		{% else %}
+			This competition is closed (<a href="/admin/competitions/{{ c.id }}/start">re-open it</a>)
+		{% endif %}
+	{% endfor %}
+	</ul>
+{% endblock %}

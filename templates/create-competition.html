@@ -1,0 +1,24 @@
+{% extends 'base_alt.html' %}
+
+{% block 'head' %}
+	<title>Create a caption competition</title>
+{% endblock %}
+
+<div>
+	{% block 'heading' %}
+		Create a caption competition
+	{% endblock %}
+	
+	{% block 'main' %}
+		<div class="normal">
+		<p><em>We recommend you format your picture to 800x600 before uploading...</em></p>
+		
+		<form class="create" method="POST" enctype="multipart/form-data" action="{{ upload_url }}">
+			<div><label>Add file: <input type="file" name="file"></label></div>
+			<div><label>Add a title (appears in list of competitions): <input type="text" name="title"></label></div>
+			<div><label>Add description (appears under the photo): <input type="text" name="description"></label></div>
+			<div><input type="submit" value="Upload"></div>
+		</form>
+		</div>
+	{% endblock %}
+</div>

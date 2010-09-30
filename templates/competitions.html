@@ -1,0 +1,32 @@
+{% extends 'base_alt.html' %}
+
+{% block 'head' %}
+	<title>Caption competition</title>
+{% endblock %}
+
+<div>
+	{% block 'heading' %}
+		{% if title %}
+			{{ title }}
+			{% endif %}
+	{% endblock %}
+	
+	{% block 'main' %}
+		<h2>Recent competitions</h2>
+		<ul class="complist comps">
+		{% for c in competitions %}
+			<li class="{% if not c.complete %}latest {% endif %}{% cycle odd,even %}">
+				<a href="/competitions/{{ c.id }}">{{ c.title }} ({{ c.date|date:"M jS Y" }})
+					
+				{% if not c.complete %}
+					Competition open &mdash; submit a caption
+				{% else %}
+					competition closed — view captions!
+				{% endif %}
+				</a>
+				</li>
+			</li>
+		{% endfor %}
+		</ul>
+	{% endblock %}
+</div>
