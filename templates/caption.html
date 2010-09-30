@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block 'head' %}
+	<title>Caption competition: captions</title>
+{% endblock %}
+
+{% block 'main' %}
+
+
+{% if title %}
+		<div id="desc">
+			<div id="descInner">
+			<h1>Title: {{ title }}</h1>
+			{% if description %}
+			<h2>Description: {{ description }}</h2>
+			{% endif %}
+			</div>
+		</div>
+	{% endif %}
+	<section class="caption">
+		<div id="captionlist">
+		<ul id="captionListInner" class="results">
+			<li><p>"{{ caption.text|striptags }}"<p>{% if caption.author %}(by {{ caption.author|striptags }}){% endif %}</li>
+			</li>
+		</ul>
+		</div>
+	</section>
+	<section class="photo">		
+		<img src="/assets/img/clip.png"  class="clip clipA" />
+		<img src="/assets/img/clip.png"  class="clip clipB" />
+		<div class="phot">
+			<img src="/photo/{{ photoId }}" />
+		</div>
+	</section>
+{% endblock %}

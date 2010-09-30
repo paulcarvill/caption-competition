@@ -13,7 +13,7 @@ class Competition(db.Model):
 	
 class Caption(db.Model):
 	text = db.StringProperty()
-	dateCreated = db.DateProperty()
+	dateCreated = db.DateTimeProperty()
 	author = db.StringProperty()
 	competitionKey = db.ReferenceProperty(Competition)
-	approved = db.BooleanProperty()
+	approved = db.BooleanProperty(default=False)

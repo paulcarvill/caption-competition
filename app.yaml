@@ -16,5 +16,13 @@ handlers:
   script: main.py
   login: admin
 
+- url: /caption/[0-9]*/.*
+  script: main.py
+  login: admin
+
+- url: /caption
+  script: main.py
+  login: admin
+
 - url: .*
   script: main.py

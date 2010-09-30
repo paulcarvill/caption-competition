@@ -20,6 +20,7 @@ from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.api import images
+from google.appengine.api import memcache
 
 from models import Photo, Competition, Caption
 from google.appengine.ext.webapp import template
@@ -46,63 +47,48 @@ class CreateCompetitionHandler(webapp.RequestHandler):
 		template_values['upload_url'] = blobstore.create_upload_url('/photo/upload')
 		path = os.path.join(os.path.dirname(__file__), 'templates/create-competition.html')
 		self.response.out.write(template.render(path, template_values))
-
-class LatestCompetitionHandler(webapp.RequestHandler):
-	def get(self):
-		template_values = {}
-		competition = Competition.all().order("-dateCreated").get()
-		photo = competition.photoKey # get photo instance
-		photoId = photo.key().id()
-		page = 0;
-		competitionId = competition.key().id()
-		showPagination = False
-		captions = Caption.all().filter('competitionKey =',competition.key()).fetch(limit=11)
-		if len(captions) == 11:
-			showPagination = True
-			captions.pop(10)
-			page = page+1
-		template_values['img'] = "/photo/%s" % photoId # get id from photo instance, to pass later in URL
-		template_values['title'] = photo.title
-		template_values['description'] = photo.description
-		template_values['photoId'] = photoId
-		template_values['competitionId'] = competitionId
-		template_values['captions'] = captions
-		template_values['complete'] = competition.complete
-		template_values['pageNum'] = photo.title
-		template_values['showPagination'] = showPagination
-		template_values['page'] = page
-		path = os.path.join(os.path.dirname(__file__), 'templates/competition.html')
-		self.response.out.write(template.render(path, template_values))
 		
 class PhotoDownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
 	def get(self, id):
-		photo = Photo.get_by_id(int(id))
-		blobKey = photo.blobKey
 		
-		if blobKey:
-			blobinfo = blobstore.get(blobKey)
+		def get_photo(self, id):
+			photo = memcache.get(id)
+			if photo is not None:
+				return photo
+			else:
+				photo = render_photo(self, id)
+				if not memcache.add(id, photo, 10):
+					logging.error("Memcache set failed.")
+				return photo
+				
+		def render_photo(self, id):
+			photo = Photo.get_by_id(int(id))
+			blobKey = photo.blobKey
 		
-			if blobinfo:
-				aspect = 'h'
-				img = images.Image(blob_key=blobKey)
-				img.rotate(180)
-				thumbnail = img.execute_transforms(output_encoding=images.JPEG)
-				if img.width > img.height:
-					pass
-				else:
-					aspect = 'v'
-				#img.im_feeling_lucky()
-				img = images.Image(blob_key=blobKey)
-				if aspect == 'h':
-					img.resize(width=505)
-				else:
-					img.resize(width=355)
-				thumbnail = img.execute_transforms(output_encoding=images.JPEG)
-				self.response.headers['Content-Type'] = 'image/jpeg'
-				self.response.out.write(thumbnail)
+			if blobKey:
+				blobinfo = blobstore.get(blobKey)
+				
+				if blobinfo:
+					aspect = 'h'
+					img = images.Image(blob_key=blobKey)
+					img.rotate(180)
+					thumbnail = img.execute_transforms(output_encoding=images.JPEG)
+					if img.width > img.height:
+						pass
+					else:
+						aspect = 'v'
+					img = images.Image(blob_key=blobKey)
+					if aspect == 'h':
+						img.resize(width=505)
+					else:
+						img.resize(width=355)
+					thumbnail = img.execute_transforms(output_encoding=images.JPEG)
+					return thumbnail
 				return
-
-		self.error(404)
+			self.error(404)
+		self.response.headers['Content-Type'] = 'image/jpeg'
+		p = get_photo(self, id) 
+		self.response.out.write(p)
 
 class CompetitionsHandler(webapp.RequestHandler):
 	def get(self):
@@ -117,50 +103,73 @@ class CompetitionsHandler(webapp.RequestHandler):
 		self.response.out.write(template.render(path, template_values))
 
 class CaptionsHandler(webapp.RequestHandler):
-	def get(self):
+	def get(self, id=None):
 		template_values = {}
-		captions = Caption.all().order("-dateCreated").fetch(limit=100)
-		template_values['captions'] = captions
-		path = os.path.join(os.path.dirname(__file__), 'templates/captions.html')
-		self.response.out.write(template.render(path, template_values))
+		if id:
+			captions = Caption.get_by_id(int(id))
+			template_values['caption'] = captions
+			template_values['comp'] = captions.competitionKey.photoKey
+			template_values['photoId'] = captions.competitionKey.photoKey.key().id()
+			template_values['id'] = id
+			path = os.path.join(os.path.dirname(__file__), 'templates/caption.html')
+			self.response.out.write(template.render(path, template_values))
+		else:
+			captions = Caption.all().order("-dateCreated").fetch(limit=100)
+			caps = []
+			for c in captions:
+				caps.append({'text' : c.text,
+				'author' : c.author,
+				'comp' : c.competitionKey,
+				'caption' : c.key().id(),
+				'dateCreated' : c.dateCreated})
+			template_values['captions'] = caps
+			path = os.path.join(os.path.dirname(__file__), 'templates/captions.html')
+			self.response.out.write(template.render(path, template_values))
 				
 class CompetitionHandler(webapp.RequestHandler):
-	def get(self, id, page=0, json=None):
+	def get(self, id=None, page=0, json=None):
 		offset = 0
 		p = 0
 		if page:
 			offset = 6*int(page)
 			p = page
 		template_values = {}
-		competition = Competition.get_by_id(int(id))
-		photo = competition.photoKey # get photo instance
-		showPagination = False
-		captions = Caption.all().filter('competitionKey =',competition).fetch(offset=offset, limit=11)
-		if len(captions) == 11:
-			showPagination = True
-			p = p+1
-			captions.pop(10)
+		if id == None:
+			competition = Competition.all().order("-dateCreated").get()
+		else:
+			competition = Competition.get_by_id(int(id))
+		if not competition:
+			self.redirect("/failure");
+		else:
+			photo = competition.photoKey # get photo instance
+			showPagination = False
+			captions = Caption.all().filter('competitionKey =',competition).fetch(offset=offset, limit=11)
+			if len(captions) == 11:
+				showPagination = True
+				p = p+1
+				captions.pop(10)
 		
-		if json == 'json':
-			jsonCaptions = []
+			caps = []
 			for c in captions:
-				jc = { "text" : c.text,
-						"author" : c.author
-					}
-				jsonCaptions.append(jc)	
-			self.response.headers['Content-Type'] = "application/json"
-			self.response.out.write(simplejson.dumps([jsonCaptions, showPagination]))
-			return
-		template_values['img'] = "/photo/%s" % photo.key().id() # get id from photo instance, to pass later in URL
-		template_values['title'] = photo.title
-		template_values['description'] = photo.description
-		template_values['competitionId'] = id
-		template_values['complete'] = competition.complete
-		template_values['captions'] = captions
-		template_values['showPagination'] = showPagination
-		template_values['page'] = p
-		path = os.path.join(os.path.dirname(__file__), 'templates/competition.html')
-		self.response.out.write(template.render(path, template_values))
+				caps.append({'text' : c.text,
+				'author' : c.author,
+				'comp' : c.competitionKey,
+				'caption' : c.key().id(),
+				'dateCreated' : c.dateCreated})
+			if json == 'json':
+				self.response.headers['Content-Type'] = "application/json"
+				self.response.out.write(simplejson.dumps([caps, showPagination]))
+				return
+			template_values['img'] = "/photo/%s" % photo.key().id() # get id from photo instance, to pass later in URL
+			template_values['title'] = photo.title
+			template_values['description'] = photo.description
+			template_values['competitionId'] = id
+			template_values['complete'] = competition.complete
+			template_values['captions'] = caps
+			template_values['showPagination'] = showPagination
+			template_values['page'] = p
+			path = os.path.join(os.path.dirname(__file__), 'templates/competition.html')
+			self.response.out.write(template.render(path, template_values))
 		
 class CaptionSubmitHandler(webapp.RequestHandler):
 	def post(self):
@@ -169,8 +178,8 @@ class CaptionSubmitHandler(webapp.RequestHandler):
 			competitionId = self.request.get('competitionId')
 			competition = Competition.get_by_id(int(competitionId)).key()
 			captionText = cgi.escape(self.request.get('caption'))
-			authorText = self.request.get('author')
-			caption = Caption(text=captionText, author=authorText, competitionKey=competition)
+			authorText = cgi.escape(self.request.get('author'))
+			caption = Caption(text=captionText, author=authorText, competitionKey=competition, dateCreated=datetime.datetime.now())
 			caption.put()
 			self.redirect("/success");
 		except:
@@ -233,7 +242,7 @@ def main():
 											('/photo/([0-9]*)', PhotoDownloadHandler),
 											
 											('/competitions/all|/competitions', CompetitionsHandler),
-											('^/$|/competitions/latest', LatestCompetitionHandler),
+											('^/$|/competitions/latest', CompetitionHandler),
 											('/competitions/([0-9]*)', CompetitionHandler),
 											('/competitions/([0-9]*)/page/([0-9]*)', CompetitionHandler),
 											('/competitions/([0-9]*)/page/([0-9]*)/(json)', CompetitionHandler),
@@ -247,13 +256,14 @@ def main():
 											('/photo/upload', UploadHandler),
 											
 											('/caption/submit', CaptionSubmitHandler),
+											('/caption/([0-9]*)', CaptionsHandler),
 											('/captions', CaptionsHandler),
 											
 											('/success', SuccessHandler),
 											('/colophon', ColophonHandler),
 											('/.*', ErrorHandler),
 										],
-                                         debug=True)
+                                         debug=False)
     util.run_wsgi_app(application)
 
 

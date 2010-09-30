@@ -5,7 +5,7 @@
 {% block 'head' %}
 	<title>Caption competition</title>
 {% endblock %}
-	
+		
 {% block 'main' %}
 	{% if title %}
 		<div id="desc">
@@ -22,9 +22,10 @@
 		<div id="captionlist">
 		<ul id="captionListInner" class="results">
 			{% for caption in captions %}
-				<li class=""><!-- result result-{{ forloop.counter }} -->
+				<li class="">
 					{% if caption.text %}<p>{{ caption.text|striptags }}<p>{% endif %}
 					{% if caption.author %}<p class="author">by {{ caption.author|striptags }}</p>{% endif %}
+					<p><a class="perm" href="/caption/{{ caption.caption }}">permalink</a>
 				</li>
 			{% endfor %}
 		</ul>
@@ -36,7 +37,7 @@
 		<form action="/caption/submit" method="POST">
 			<input type="hidden" name="competitionId" value="{{ competitionId }}" />
 			<div>
-				<label>Your caption:</label><textarea maxlength=140 name="caption" /></textarea>
+				<label>Your caption (will be moderated first):</label><textarea maxlength=140 name="caption" /></textarea>
 			</div>
 			<div>
 				<label>Your name:</label><input type="text" name="author" />

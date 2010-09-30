@@ -8,7 +8,7 @@
 <h2>Captions</h2>
 	<div class="complist comps bd">
 		{% for caption in captions %}
-<li>{{ caption.text }} (by {{ caption.author }} on photo XXX) [<a href="/captions/{{caption.id}}/edit">edit</a>, <a href="/captions/n/delete">delete</a>, <a href="/captions/n/approve">approve</a>]</li>
+<li>{{ caption.text }} ({% if caption.author %}by {{ caption.author }} {% endif %}on photo {{ caption.comp }} on {{ caption.dateCreated }}) [<a href="/captions/{{caption.caption}}/edit">edit</a>, <a href="/captions/{{caption.caption}}/delete">delete</a>, <a href="/captions/{{caption.caption}}/approve">approve</a>]</li>
 {% endfor %}
 </div>
 {% endblock %}

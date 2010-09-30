@@ -11,12 +11,16 @@ var paginator = {
 		this.currentCaption = 1;
 		this.totalCaptions = this.getTotalNumberOfCaptions();
 		
-		if(this.showPagination()){
+		if(this.totalCaptions > 1){
 			this.addNavigationControls();
-			var span = $('#more a span');
-			this.comp = span.attr('id');
-			this.page = span.text();
-			$('#more').remove();
+		}
+		var span = $('#more a span');
+		this.comp = span.attr('id');
+		this.page = span.text();
+		$('#more').remove();
+		
+		this.showPagination = false;
+		if(this.pagination()) {
 			this.showPagination = true;
 		}
 	},
@@ -34,7 +38,7 @@ var paginator = {
 		return this.captionListInner.children().length;
 	},
 	
-	showPagination : function(){
+	pagination : function(){
 		var pagination = $('#more');
 		return pagination.length;
 	},
@@ -125,7 +129,7 @@ var paginator = {
 		if($('#more').length == 0){
 			paginator.moreLink = $('<p id="more">load more...</p>');
 			paginator.moreLink.click(paginator.getMoreCaptions);
-			paginator.next.after(paginator.moreLink);
+			paginator.counter.after(paginator.moreLink);
 		}
 	},
 	
