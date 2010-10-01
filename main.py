@@ -57,7 +57,7 @@ class PhotoDownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
 				return photo
 			else:
 				photo = render_photo(self, id)
-				if not memcache.add(id, photo, 10):
+				if not memcache.add(id, photo):
 					logging.error("Memcache set failed.")
 				return photo
 				
@@ -111,6 +111,7 @@ class CaptionsHandler(webapp.RequestHandler):
 			template_values['comp'] = captions.competitionKey.photoKey
 			template_values['photoId'] = captions.competitionKey.photoKey.key().id()
 			template_values['id'] = id
+			template_values['author'] = captions.author	
 			path = os.path.join(os.path.dirname(__file__), 'templates/caption.html')
 			self.response.out.write(template.render(path, template_values))
 		else:
@@ -131,39 +132,43 @@ class CompetitionHandler(webapp.RequestHandler):
 		offset = 0
 		p = 0
 		if page:
-			offset = 6*int(page)
+			offset = 10*int(page)
 			p = page
 		template_values = {}
-		if id == None:
+		if not id:
 			competition = Competition.all().order("-dateCreated").get()
 		else:
 			competition = Competition.get_by_id(int(id))
-		if not competition:
-			self.redirect("/failure");
+		photo = competition.photoKey # get photo instance
+		showPagination = False
+		captions = Caption.all().filter('competitionKey =',competition).fetch(offset=offset, limit=11)
+		if len(captions) == 11:
+			showPagination = True
+			p = p+1
+			captions.pop(10)
+	
+		if json == 'json':
+			caps = []
+			for c in captions:
+				caps.append({'text' : "%s" % c.text,
+				"author" : "%s" % c.author,
+				"comp" : "%s" % c.competitionKey,
+				"caption" : "%s" % c.key().id(),
+				"dateCreated" : "%s" % c.dateCreated})
+			self.response.headers['Content-Type'] = "application/json"
+			self.response.out.write(simplejson.dumps([caps, showPagination, p]))
 		else:
-			photo = competition.photoKey # get photo instance
-			showPagination = False
-			captions = Caption.all().filter('competitionKey =',competition).fetch(offset=offset, limit=11)
-			if len(captions) == 11:
-				showPagination = True
-				p = p+1
-				captions.pop(10)
-		
 			caps = []
 			for c in captions:
 				caps.append({'text' : c.text,
-				'author' : c.author,
-				'comp' : c.competitionKey,
-				'caption' : c.key().id(),
-				'dateCreated' : c.dateCreated})
-			if json == 'json':
-				self.response.headers['Content-Type'] = "application/json"
-				self.response.out.write(simplejson.dumps([caps, showPagination]))
-				return
+				"author" : c.author,
+				"comp" : c.competitionKey,
+				"caption" : c.key().id(),
+				"dateCreated" : c.dateCreated})
 			template_values['img'] = "/photo/%s" % photo.key().id() # get id from photo instance, to pass later in URL
 			template_values['title'] = photo.title
 			template_values['description'] = photo.description
-			template_values['competitionId'] = id
+			template_values['competitionId'] = competition.key().id()
 			template_values['complete'] = competition.complete
 			template_values['captions'] = caps
 			template_values['showPagination'] = showPagination
@@ -179,11 +184,16 @@ class CaptionSubmitHandler(webapp.RequestHandler):
 			competition = Competition.get_by_id(int(competitionId)).key()
 			captionText = cgi.escape(self.request.get('caption'))
 			authorText = cgi.escape(self.request.get('author'))
-			caption = Caption(text=captionText, author=authorText, competitionKey=competition, dateCreated=datetime.datetime.now())
-			caption.put()
-			self.redirect("/success");
+			if len(captionText) > 140 or len(authorText) > 140:
+				template_values = { "msg" : "too many characters" }
+				path = os.path.join(os.path.dirname(__file__), 'templates/oops.html')
+				self.response.out.write(template.render(path, template_values))
+			else:
+				caption = Caption(text=captionText, author=authorText, competitionKey=competition, dateCreated=datetime.datetime.now())
+				caption.put()
+				self.redirect("/success");
 		except:
-			self.redirect("/failure");
+			self.redirect("/oops");
 			
 class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 	def post(self):
@@ -232,7 +242,7 @@ class SuccessHandler(webapp.RequestHandler):
 		template_values = {}
 		path = os.path.join(os.path.dirname(__file__), 'templates/success.html')
 		self.response.out.write(template.render(path, template_values))
-		
+	
 class ErrorHandler(webapp.RequestHandler):
     def get(self):
 		self.response.out.write('Oops, error! This is more like a CRAPtion Competition, isn\'t it?')

@@ -1,0 +1,16 @@
+{% extends 'base_alt.html' %}
+
+{% block 'head' %}
+	<title>Caption competition: oops!</title>
+{% endblock %}
+
+<div>
+	{% block 'heading' %}
+	{% endblock %}
+	
+	{% block 'main' %}
+		<div class="success">
+			<p>{{ msg }}</p>
+		</div>
+	{% endblock %}
+</div>

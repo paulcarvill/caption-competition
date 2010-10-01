@@ -17,12 +17,12 @@ var paginator = {
 		var span = $('#more a span');
 		this.comp = span.attr('id');
 		this.page = span.text();
-		$('#more').remove();
 		
 		this.showPagination = false;
 		if(this.pagination()) {
 			this.showPagination = true;
 		}
+		$('#more').remove();
 	},
 	
 	removeClassesForStyling : function(){
@@ -151,6 +151,7 @@ var paginator = {
 		paginator.setPaginatorWidth();
 		paginator.animateUp();
 		paginator.updateNextButton();
+		paginator.page = response[1];
 	},
 	
 	setPaginatorWidth : function(){

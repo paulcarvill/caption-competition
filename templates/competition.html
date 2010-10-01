@@ -3,7 +3,7 @@
 {% block 'bodyclass' %}{% if complete %}complete{% else %}active{% endif %}{% endblock %}
 
 {% block 'head' %}
-	<title>Caption competition</title>
+	<title>LBi Caption competition</title>
 {% endblock %}
 		
 {% block 'main' %}
@@ -23,9 +23,9 @@
 		<ul id="captionListInner" class="results">
 			{% for caption in captions %}
 				<li class="">
-					{% if caption.text %}<p>{{ caption.text|striptags }}<p>{% endif %}
-					{% if caption.author %}<p class="author">by {{ caption.author|striptags }}</p>{% endif %}
-					<p><a class="perm" href="/caption/{{ caption.caption }}">permalink</a>
+					{% if caption.text %}<p class="cap">{{ caption.text|striptags }}</p>{% endif %}
+					{% if caption.author %}<p class="author">this caption sent in by: {{ caption.author|striptags }}</p>{% endif %}
+					<p class="perm"><a href="/caption/{{ caption.caption }}">permalink</a></p>
 				</li>
 			{% endfor %}
 		</ul>
@@ -37,10 +37,10 @@
 		<form action="/caption/submit" method="POST">
 			<input type="hidden" name="competitionId" value="{{ competitionId }}" />
 			<div>
-				<label>Your caption (will be moderated first):</label><textarea maxlength=140 name="caption" /></textarea>
+				<label>Your caption (max 140):</label><textarea maxlength=140 name="caption" /></textarea>
 			</div>
 			<div>
-				<label>Your name:</label><input type="text" name="author" />
+				<label>Your name (max 140):</label><input type="text" name="author" />
 			</div>
 			<div>
 				<input type="submit" value="Submit caption!"/>

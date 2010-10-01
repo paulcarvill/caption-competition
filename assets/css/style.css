@@ -406,8 +406,20 @@ footer a:hover {
 	text-decoration: underline;
 }
 .perm {
+	margin-top: 20px;
+	font-size: 80%;
+}
+.perm a {
 	color: #4ae7ee
 }
-a.perm:hover {
+.perm a:hover {
 	text-decoration: underline;
+}
+.author {
+	border-top: 1px dotted #fff;
+	margin-top: 15px;
+	padding-top: 5px;
+}
+.cap {
+	font-size:110%;
 }
