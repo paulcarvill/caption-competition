@@ -20,7 +20,7 @@
 	<section class="caption">
 		{% if complete %}
 		<div id="captionlist">
-		<ul id="captionListInner" class="results">
+		<ul id="captionListInner" style="width:{{ divWidth }}px" class="results">
 			{% for caption in captions %}
 				<li class="">
 					{% if caption.text %}<p class="cap">{{ caption.text|striptags }}</p>{% endif %}
@@ -48,7 +48,7 @@
 		</form>
 		{% endif %}
 		<img src="/assets/img/chaplin.png" class="chaplin" />
-		<img src="/assets/img/reminder.png" class="reminder" />
+		<a href="https://uk.maconomy.lbi.com"><img src="/assets/img/reminder.png" class="reminder" /></a>
 	</section>	
 	<section class="photo">		
 		<img src="/assets/img/clip.png"  class="clip clipA" />

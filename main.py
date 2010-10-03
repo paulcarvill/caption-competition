@@ -141,7 +141,7 @@ class CompetitionHandler(webapp.RequestHandler):
 			competition = Competition.get_by_id(int(id))
 		photo = competition.photoKey # get photo instance
 		showPagination = False
-		captions = Caption.all().filter('competitionKey =',competition).fetch(offset=offset, limit=11)
+		captions = Caption.all().filter('competitionKey =',competition).filter('approved =',True).fetch(limit=100)
 		if len(captions) == 11:
 			showPagination = True
 			p = p+1
@@ -173,6 +173,7 @@ class CompetitionHandler(webapp.RequestHandler):
 			template_values['captions'] = caps
 			template_values['showPagination'] = showPagination
 			template_values['page'] = p
+			template_values['divWidth'] = len(captions) * 437
 			path = os.path.join(os.path.dirname(__file__), 'templates/competition.html')
 			self.response.out.write(template.render(path, template_values))
 		
